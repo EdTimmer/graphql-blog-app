@@ -5,7 +5,7 @@ const getUserId = (request, requireAuth = true) => {
 
   if (header) {
     const token = header.replace('Bearer ', '');  //get just token
-    const decoded = jwt.verify(token, 'thisisasecret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     return decoded.userId;
   }
 
@@ -14,8 +14,6 @@ const getUserId = (request, requireAuth = true) => {
   }
 
   return null;
-
-
 }
 
 export { getUserId as default };
