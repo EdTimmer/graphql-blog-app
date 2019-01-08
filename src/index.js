@@ -1,4 +1,4 @@
-import '@babel/polyfill';
+import '@babel/polyfill';   //if get warning replace with '@babel/polyfill/noConflict'
 import { GraphQLServer, PubSub } from 'graphql-yoga';
 import db from './db';
 import { resolvers, fragmentReplacements } from './resolvers/index';
