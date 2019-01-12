@@ -3,6 +3,7 @@ import { gql } from 'apollo-boost';
 import prisma from '../src/prisma';
 import seedDatabase, { userOne, postOne, postTwo } from './utils/seedDatabase';
 import getClient from './utils/getClient';
+import { getPosts, getMyPosts, updatePost, createPost, deletePost } from './utils/operations';
 import { printSchema } from 'graphql';
 
 jest.setTimeout(1000000000);
@@ -12,19 +13,6 @@ const client = getClient();
 beforeEach(seedDatabase);
 
 test('Should expose published posts', async () => {
-  const getPosts = gql`
-    query {
-      posts {
-        id
-        title 
-        body 
-        published
-        author {
-          name
-        }
-      }
-    }
-  `
 
   const response = await client.query({ query: getPosts });
 
@@ -34,59 +22,23 @@ test('Should expose published posts', async () => {
 
 test('Should fetch user posts', async () => {
   const client = getClient(userOne.jwt);
-
-  const getMyPosts = gql`
-    query {
-      myPosts {
-        id
-        title 
-        body 
-        published
-      }
-    }
-  `
+  
   const { data } = await client.query({ query: getMyPosts });
 
   expect(data.myPosts.length).toBe(2);
 });
 
-test('Should fetch user profile', async () => {
+test('Should be able to update own post', async () => {
   const client = getClient(userOne.jwt);
 
-  const getProfile = gql`
-    query {
-      me {
-        id
-        name
-        email
-      }
+  const variables = {
+    id: postOne.post.id,
+    data: {
+      published: false
     }
-  `
-  const { data } = await client.query({ query: getProfile });
-
-  expect(data.me.id).toBe(userOne.user.id);
-  expect(data.me.name).toBe(userOne.user.name);
-  expect(data.me.email).toBe(userOne.user.email);
-});
-
-test('Should be able to update own post', async () => {
-  const client = getClient(userOne.jwt)
-  const updatePost = gql`
-    mutation {
-      updatePost(
-        id: "${postOne.post.id}",
-        data: {
-          published: false
-        }
-      ){
-        id
-        title 
-        body 
-        published
-      }
-    }
-  `
-  const { data } = await client.mutate({ mutation: updatePost });
+  }
+  
+  const { data } = await client.mutate({ mutation: updatePost, variables });
 
   const exists = await prisma.exists.Post({ id: postOne.post.id, published: false })
 
@@ -96,24 +48,16 @@ test('Should be able to update own post', async () => {
 
 test('Should create a new post', async () => {
   const client = getClient(userOne.jwt);
-  const createPost = gql`
-    mutation {
-      createPost(
-        data: {
-          title: "New Post",
-          body: "..."
-          published: true
-        }
-      ){
-        id
-        title 
-        body 
-        published
-      }
-    } 
-  `
 
-  const { data } = await client.mutate({ mutation: createPost });
+  const variables = {
+    data: {
+      title: "New Post",
+      body: "...",
+      published: true
+    }
+  }
+
+  const { data } = await client.mutate({ mutation: createPost, variables });
 
   // const exists = await prisma.exists.Post({ id: postOne.post.id, published: false })
   expect(data.createPost.title).toBe('New Post');
@@ -125,17 +69,11 @@ test('Should create a new post', async () => {
 test('Should delete post', async () => {
   const client = getClient(userOne.jwt);
 
-  const deletePost = gql`
-    mutation {
-      deletePost(
-        id: "${postTwo.post.id}"
-      ) {
-        id
-      }
-    }
-  `
+  const variables = {
+    id: postTwo.post.id
+  }
 
-  await client.mutate({ mutation: deletePost });
+  await client.mutate({ mutation: deletePost, variables });
   const exists = await prisma.exists.Post({ id: postTwo.post.id });
 
   expect(exists).toBe(false)
