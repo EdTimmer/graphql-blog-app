@@ -3,7 +3,7 @@ import { gql } from 'apollo-boost';
 import prisma from '../src/prisma';
 import seedDatabase, { userOne, postOne, postTwo } from './utils/seedDatabase';
 import getClient from './utils/getClient';
-import { getPosts, getMyPosts, updatePost, createPost, deletePost } from './utils/operations';
+import { getPosts, getMyPosts, updatePost, createPost, deletePost, subscribeToPosts } from './utils/operations';
 import { printSchema } from 'graphql';
 
 jest.setTimeout(1000000000);
@@ -77,4 +77,17 @@ test('Should delete post', async () => {
   const exists = await prisma.exists.Post({ id: postTwo.post.id });
 
   expect(exists).toBe(false)
-})
+});
+
+test('Should subscribe to posts', async (done) => {
+
+  client.subscribe({ query: subscribeToPosts }).subscribe({
+    next(response) {
+      expect(response.data.post.mutation).toBe('DELETED')
+      done()
+    }
+  });
+
+  //change post 
+  await prisma.mutation.deletePost({ where: { id: postOne.post.id }})
+});

@@ -96,12 +96,52 @@ const createPost = gql`
 `
 
 const deletePost = gql`
-    mutation($id: ID!) {
-      deletePost(id: $id) {
-        id
+  mutation($id: ID!) {
+    deletePost(id: $id) {
+      id
+    }
+  }
+`
+
+
+const getComments = gql`
+  query {
+    comments {
+      id
+      text
+      author {
+        name
       }
     }
-  `
+  }
+`
 
+const deleteComment = gql`
+  mutation($id: ID!) {
+    deleteComment(id: $id) {
+      id
+    }
+  }
+`
 
-export { createUser, login, getUsers, getProfile, getPosts, getMyPosts, updatePost, createPost, deletePost };
+const subscribeToComments = gql`
+  subscription($postId: ID!) {
+    comment(postId: $postId) {
+      mutation
+      node {
+        id
+        text
+      }
+    }
+  }
+`
+
+const subscribeToPosts = gql`
+  subscription {
+    post {
+      mutation
+    }
+  }
+`
+
+export { createUser, login, getUsers, getProfile, getPosts, getMyPosts, updatePost, createPost, deletePost, getComments, deleteComment, subscribeToComments, subscribeToPosts };
